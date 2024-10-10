@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "expdb"
+version = "0.1.0"
+description = "An experiment database for dataset tracking and data l"
+authors = ["Carson McNeil <carson.mcneil@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+SQLAlchemy = "^2.0.35"
+psycopg2 = "^2.9.9"
+alembic = "^1.13.3"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
