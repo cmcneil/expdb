@@ -1,7 +1,7 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from models import Base  # Import Base from models/__init__.py
-from config import Config
+from expdb.config import Config
 
 # Create the engine for PostgreSQL
 engine = create_engine(Config.SQLALCHEMY_DATABASE_URI)
