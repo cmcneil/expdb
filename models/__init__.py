@@ -6,4 +6,4 @@ Base = declarative_base()
 # Import the models so they are registered with Base
 from .subject import Subject
 from .study import Study
-from .dataset import Dataset
+from .timecourse import Data, DataType, Modality, Timecourse, TransformData
