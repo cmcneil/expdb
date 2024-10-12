@@ -86,18 +86,14 @@ class TransformData:
         used to create the timecourse.
     git_commit: str
         The git commit of the code used to produce the timecourse.
-    # """
-    # transform_classes: List[Transform] = dataclasses.field(
-    #     default_factory=list, repr=False)  # Not persisted
+    """
     def __init__(self, transform_names_json: str,
                  transform_params_json: str, git_commit: str):
         self.transform_names_json = transform_names_json
         self.transform_params_json = transform_params_json
         self.git_commit = git_commit
         self._validate()
-    # transform_names_json: str = ""
-    # transform_params_json: str = ""
-    # git_commit: str = ""
+
 
     def __composite_values__(self):
         return (
@@ -124,44 +120,6 @@ class TransformData:
                 f"Transform names and params must have the same length: "
                 f"{len(transform_names)} != {len(transform_params)}"
             )
-
-        # Optionally validate the classes are in the correct namespace or subclass of `Transform`
-        # for cls in self.transform_classes:
-        #     if not issubclass(cls, Transform):
-        #         raise ValueError(f"{cls} is not a valid subclass of Transform")
-        # def __post_init__(self):
-    #     transform_names = json.loads(self.transform_names_json)
-    #     transform_params = json.loads(self.transform_params_json)
-
-    #     if len(transform_names) != len(transform_params):
-    #         raise ValueError(
-    #             f"Transform names and params must have the same length: "
-    #             f"{len(transform_names)} != {len(transform_params)}")
-
-    #     are_classes_in_namespace  = {name: is_class_in_namespace(name)
-    #                                  for name in transform_names}
-    #     are_classes_xfm  = {name: is_class_subclass(name, Transform)
-    #                         for name in transform_names}
-    #     if not all(are_classes_in_namespace.values()):
-    #         raise ValueError(
-    #             f"Invalid transform names: "
-    #             f"{[k for k, v in are_classes_in_namespace.items() if not v]}")
-    #     if not all(are_classes_xfm.values()):
-    #         raise ValueError(
-    #             f"Invalid transform classes: "
-    #             f"{[k for k, v in are_classes_xfm.items() if not v]}")
-    # @validates('transform_names_json')
-    # def validate_transform_names(self, key, value):
-    #     # Ensure valid JSON for names and params
-    #     json.loads(value)
-    #     return value
-
-    # @validates('transform_params_json')
-    # def validate_transform_params(self, key, value):
-    #     # Ensure valid JSON for params
-    #     json.loads(value)
-    #     return value
-
 
     def __repr__(self) -> str:
         return (f"Transform({'->'.join(self.transform_names)},"
