@@ -117,7 +117,7 @@ def test_timecourse_invalid_enum_values(session):
     
     # Invalid modality
     with pytest.raises(ValueError):
-        data = Data(sampling_rate=256.0, path="/data/invalid", modality="INVALID", type=DataType.FMRI)
+        data = Data(sampling_rate=256.0, path="/data/invalid", modality="INVALID", type=DataType.FMRI)  # pytype: disable=wrong-arg-types
         transform_data = TransformData(
         transform_names_json=json.dumps(["ValidTransform"]),
             transform_params_json=json.dumps([{'param1': 1}]),

@@ -122,7 +122,8 @@ class TransformData:
             )
 
     def __repr__(self) -> str:
-        return (f"Transform({'->'.join(self.transform_names)},"
+        transform_names = json.loads(self.transform_names_json)
+        return (f"Transform({'->'.join(transform_names)},"
                 f"#{self.git_commit})")
 
 

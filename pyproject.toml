@@ -16,6 +16,9 @@ Flask-Admin = "*"
 pytype = "*"
 pytest = "*"
 
+[tool.pytype]
+inputs = ['expdb']
+
 
 [build-system]
 requires = ["poetry-core"]
