@@ -3,3 +3,4 @@ poetry.lock
 *.pytest_cache
 *.ipynb_checkpoints
 .pytype*
+*.sqlite
