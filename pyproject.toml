@@ -15,6 +15,7 @@ Flask = "*"
 Flask-Admin = "*"
 pytype = "*"
 pytest = "*"
+wtforms-sqlalchemy = "*"
 
 [tool.pytype]
 inputs = ['expdb']

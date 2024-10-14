@@ -1,0 +1,53 @@
+{% extends 'admin/master.html' %}
+{% block body %}
+<div class="container-fluid">
+    <h1>Admin Dashboard</h1>
+    <p>Total Studies: {{ study_count }}</p>
+    <p>Total Subjects: {{ subject_count }}</p>
+    <p>Total Timecourses: {{ timecourse_count }}</p>
+
+    <h1>Timecourse DAG Visualization</h1>
+    <!-- <div id="cy" style="width: 100%; height: 600px;"></div> Container for the DAG -->
+    <div id="2d-graph" style="width: 100%; height: 600px;"></div>
+  
+    <!-- Pass the timecourse data from Python to JavaScript -->
+    <script>
+      var timecourseData = {{ timecourse_data|tojson }};
+    </script>
+  
+  <script src="https://unpkg.com/force-graph/dist/force-graph.min.js"></script>
+
+  <!-- JavaScript to Render the 2D Force Graph -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Convert the timecourse data into nodes and links for the force graph
+      var nodes = timecourseData.map(tc => ({ id: 'tc' + tc.id,
+                                              name: tc.transform_names.join(' -> ') }));
+      var links = [];
+
+      timecourseData.forEach(function(tc) {
+        tc.derived_from.forEach(function(parentId) {
+          links.push({ source: 'tc' + parentId, target: 'tc' + tc.id });
+        });
+      });
+
+      // Initialize the 2D force graph
+      const Graph = ForceGraph()(document.getElementById('2d-graph'))
+        .graphData({ nodes: nodes, links: links }) // Add the nodes and links
+        .nodeId('id')  // ID for each node
+        .nodeLabel('name') // Label for each node
+        .nodeAutoColorBy('id')  // Automatically color nodes based on their id
+        .linkDirectionalParticles(4) // Show directional particles along edges
+        .linkDirectionalParticleSpeed(d => Math.random() * 0.01 + 0.01) // Particle speed
+        .width(window.innerWidth * 0.95) // Adjust the width dynamically
+        .height(600) // Set a fixed height
+        .dagMode('lr') // Render in right-to-left mode
+        .dagLevelDistance(100) // Set the distance between nodes
+        .onNodeClick(node => {
+          // Handle node click (optional)
+          alert(`Clicked node: ${node.name}`);
+        });
+    });
+  </script>
+</div>
+{% endblock %}

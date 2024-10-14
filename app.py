@@ -1,4 +1,4 @@
-from app import create_app
+from expdb.app import create_app
 
 # Initialize and run the Flask app
 if __name__ == '__main__':

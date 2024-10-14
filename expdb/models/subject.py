@@ -29,3 +29,6 @@ class Subject(Base):
   # timecourses collected from the subject
   timecourses: Mapped[List[Timecourse]] = relationship(
     "Timecourse", back_populates="subject", cascade="all, delete-orphan")
+  
+  def __repr__(self):
+    return f"Subject({self.code} - {self.name})"
