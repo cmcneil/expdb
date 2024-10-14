@@ -7,6 +7,18 @@
     <p>Total Timecourses: {{ timecourse_count }}</p>
 
     <h1>Timecourse DAG Visualization</h1>
+    <p>
+        <style>
+            li { display: flex;}
+        </style>
+        <ul>
+            <li><b>Timecourse Name: </b><div id="node-name"></div></li>
+            <li><b>Study: </b><div id="node-study"></div></li>
+            <li><b>Subject: </b><div id="node-subject"></div></li>
+            <li><b>Type: </b><div id="node-type"></div></li>
+            <li><b>Data Link: <a id="node-path-link"></a></b></li>
+        </ul>
+    </p>
     <!-- <div id="cy" style="width: 100%; height: 600px;"></div> Container for the DAG -->
     <div id="2d-graph" style="width: 100%; height: 600px;"></div>
   
@@ -22,7 +34,11 @@
     document.addEventListener('DOMContentLoaded', function() {
       // Convert the timecourse data into nodes and links for the force graph
       var nodes = timecourseData.map(tc => ({ id: 'tc' + tc.id,
-                                              name: tc.transform_names.join(' -> ') }));
+                                              name: tc.transform_names.join(' -> '),
+                                              study: tc.study_name,
+                                              subject: tc.subject_code,
+                                              type: tc.type,
+                                              path: tc.path }));
       var links = [];
 
       timecourseData.forEach(function(tc) {
@@ -36,7 +52,7 @@
         .graphData({ nodes: nodes, links: links }) // Add the nodes and links
         .nodeId('id')  // ID for each node
         .nodeLabel('name') // Label for each node
-        .nodeAutoColorBy('id')  // Automatically color nodes based on their id
+        .nodeAutoColorBy('name')  // Automatically color nodes based on their id
         .linkDirectionalParticles(4) // Show directional particles along edges
         .linkDirectionalParticleSpeed(d => Math.random() * 0.01 + 0.01) // Particle speed
         .width(window.innerWidth * 0.95) // Adjust the width dynamically
@@ -45,7 +61,12 @@
         .dagLevelDistance(100) // Set the distance between nodes
         .onNodeClick(node => {
           // Handle node click (optional)
-          alert(`Clicked node: ${node.name}`);
+          document.getElementById('node-name').innerHTML = `${node.name}`;
+          document.getElementById('node-study').innerHTML = `${node.study}`;
+          document.getElementById('node-subject').innerHTML = `${node.subject}`;
+          document.getElementById('node-type').innerHTML = `${node.type}`;
+          document.getElementById('node-path-link').href = `${node.path}`;
+          document.getElementById('node-path-link').innerHTML = `${node.path}`;
         });
     });
   </script>

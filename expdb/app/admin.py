@@ -52,6 +52,28 @@ class SubjectAdmin(ModelView):
             query_factory=lambda: self.session.query(Study),
             get_label='name'
         )
+
+class TimecourseAdmin(ModelView):
+    # Display studies as a multi-select dropdown
+    form_columns = ['data', 'transform', 'is_pilot', 'derived_from']
+    
+    column_searchable_list = ['transform']
+
+    # Filterable columns
+    column_filters = [ 'is_pilot', 'derived_from']
+
+    # Sortable columns
+    column_sortable_list = ['data', 'transform', 'is_pilot', 'derived_from']
+
+    # Customize the columns displayed in the list view
+    column_list = ['data', 'transform', 'is_pilot', 'derived_from']
+
+    def form_derived_from(self):
+        return QuerySelectMultipleField(
+            'Derived From',
+            query_factory=lambda: self.session.query(Timecourse),
+            get_label='name'
+        )
     
 class MyAdminIndexView(AdminIndexView):
 
@@ -70,6 +92,8 @@ class MyAdminIndexView(AdminIndexView):
         timecourse_data = [
             {
                 'id': timecourse.id,
+                'study_name': timecourse.study.name,
+                'subject_code': timecourse.subject.code,
                 'label': f'Timecourse {timecourse.id}',
                 'sampling_rate': timecourse.data.sampling_rate,
                 'path': timecourse.data.path,
@@ -99,3 +123,4 @@ def init_admin(app):
     # Add SQLAlchemy models to the admin interface
     admin.add_view(SubjectAdmin(Subject, app.session))
     admin.add_view(StudyAdmin(Study, app.session))
+    admin.add_view(TimecourseAdmin(Timecourse, app.session))
