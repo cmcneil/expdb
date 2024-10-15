@@ -9,9 +9,11 @@ class Config:
     
     SQLALCHEMY_DATABASE_URI = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}/{DB_NAME}"
     SECRET_KEY = os.getenv('SECRET_KEY', 'a-secure-default-key')
+    GS_BUCKET_NAME = os.getenv('GS_BUCKET_NAME', 'expdb')
 
 class DevelopmentConfig(Config):
     SQLALCHEMY_DATABASE_URI = os.getenv('DEV_DATABASE_URL', 'sqlite:///dev_db.sqlite')  # SQLite for development
+    GS_BUCKET_NAME = 'expdb_dev'
     DEBUG = True
 
 

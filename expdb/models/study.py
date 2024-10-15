@@ -11,7 +11,7 @@ class Study(Base):
     __tablename__ = 'studies'
     
     id = mapped_column(Integer, primary_key=True)
-    name = mapped_column(String(255), nullable=False)
+    name = mapped_column(String(255), nullable=False, unique=True)
     description = mapped_column(Text, nullable=True)
     github_repo = mapped_column(String(255), nullable=False)
     created_at = mapped_column(DateTime, server_default=func.now())

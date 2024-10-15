@@ -13,8 +13,11 @@ sqlalchemy = "*"
 alembic = "*"
 Flask = "*"
 Flask-Admin = "*"
+pandas = "*"
 pytype = "*"
 pytest = "*"
+mne = "*"
+numpy = "*"
 wtforms-sqlalchemy = "*"
 
 [tool.pytype]

@@ -55,7 +55,7 @@ class SubjectAdmin(ModelView):
 
 class TimecourseAdmin(ModelView):
     # Display studies as a multi-select dropdown
-    form_columns = ['data', 'transform', 'is_pilot', 'derived_from']
+    form_columns = ['path', 'transform', 'is_pilot', 'derived_from']
     
     column_searchable_list = ['transform']
 
@@ -66,7 +66,7 @@ class TimecourseAdmin(ModelView):
     column_sortable_list = ['data', 'transform', 'is_pilot', 'derived_from']
 
     # Customize the columns displayed in the list view
-    column_list = ['data', 'transform', 'is_pilot', 'derived_from']
+    column_list = ['id', 'path', 'transform', 'is_pilot', 'derived_from']
 
     def form_derived_from(self):
         return QuerySelectMultipleField(
@@ -96,8 +96,8 @@ class MyAdminIndexView(AdminIndexView):
                 'subject_code': timecourse.subject.code,
                 'label': f'Timecourse {timecourse.id}',
                 'sampling_rate': timecourse.data.sampling_rate,
-                'path': timecourse.data.path,
-                'description': timecourse.data.description,
+                'path': timecourse.path,
+                'description': timecourse.description,
                 'modality': timecourse.data.modality.name,
                 'type': timecourse.data.type.name,
                 'is_pilot': timecourse.is_pilot,

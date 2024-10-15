@@ -1,9 +1,11 @@
 import json
-from . import create_app, db
+
+from .. import db
 from ..models import Study, Subject, Timecourse, Modality, DataType, Data, TransformData
 from sqlalchemy.exc import SQLAlchemyError
 
 def populate_dev_data():
+
     db.flush_db()
     db.init_db()
 
@@ -30,27 +32,30 @@ def populate_dev_data():
         )
 
         # Timecourse data
-        data1 = Data(sampling_rate=1000, path="gs://bucket/path1", 
-                     modality=Modality.IMAGING, type=DataType.EEG,
-                     description="EEG Timecourse")
-        data2 = Data(sampling_rate=500, path="gs://bucket/path2", 
-                     modality=Modality.BEHAVIORAL, type=DataType.INPUT_RESPONSE,
-                     description="Behavioral Timecourse")
+        data1 = Data(sampling_rate=1000,  
+                     modality=Modality.IMAGING, type=DataType.EEG)
+        data2 = Data(sampling_rate=500,
+                     modality=Modality.BEHAVIORAL, type=DataType.INPUT_RESPONSE)
 
-        data3 = Data(sampling_rate=250, path="gs://bucket/path3", 
-                     modality=Modality.STIMULUS, type=DataType.VIDEO,
-                     description="Stimulus Timecourse")
+        data3 = Data(sampling_rate=250,
+                     modality=Modality.STIMULUS, type=DataType.VIDEO)
 
         # Create a chain of Timecourses forming a 4-link deep DAG structure
         # All timecourses remain under the same study and subject
         timecourse1 = Timecourse(data=data1, transform=transform_data1,
-                                 study=study, subject=subject, _is_pilot=True)
+                                 study=study, subject=subject, _is_pilot=True,
+                                 path="gs://bucket/path1",
+                                 description="EEG Timecourse")
         
         timecourse2 = Timecourse(data=data2, transform=transform_data2,
-                                 study=study, subject=subject, _is_pilot=True)
+                                 study=study, subject=subject, _is_pilot=True,
+                                 path="gs://bucket/path2",
+                                 description="Behavioral Timecourse")
         
         timecourse3 = Timecourse(data=data3, transform=transform_data1,
-                                 study=study, subject=subject, _is_pilot=True)
+                                 study=study, subject=subject, _is_pilot=True,
+                                 path="gs://bucket/path3",
+                                 description="Stimulus Timecourse")
         
         # Establish relationships between timecourses
         timecourse2.derived_from.append(timecourse1)  # timecourse2 is derived from timecourse1
@@ -58,14 +63,20 @@ def populate_dev_data():
 
         # Add more timecourses to form a 4-link deep DAG
         timecourse4 = Timecourse(data=data1, transform=transform_data2,
-                                 study=study, subject=subject, _is_pilot=True)
+                                 study=study, subject=subject, _is_pilot=True,
+                                 path="gs://bucket/path1",
+                                 description="EEG Timecourse Preprocessed")
         timecourse4.derived_from.append(timecourse3)  # timecourse4 is derived from timecourse3
         
         timecourse5 = Timecourse(data=data2, transform=transform_data1,
-                                 study=study, subject=subject, _is_pilot=True)
+                                 study=study, subject=subject, _is_pilot=True,
+                                 path="gs://bucket/path2",
+                                 description="Behavioral Timecourse Preprocessed")
         
         timecourse6 = Timecourse(data=data2, transform=transform_data1,
-                                 study=study, subject=subject, _is_pilot=True)
+                                 study=study, subject=subject, _is_pilot=True,
+                                 path="gs://bucket/path2",
+                                 description="Behavioral Timecourse Preprocessed")
         timecourse6.derived_from.append(timecourse2)  # timecourse5 is derived from timecourse4
         timecourse4.derived_from.append(timecourse6) 
 

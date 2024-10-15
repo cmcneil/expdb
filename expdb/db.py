@@ -1,6 +1,6 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from ..models import Base  # Import Base from models/__init__.py
+from .models import Base  # Import Base from models/__init__.py
 from .config import get_config
 
 config = get_config()

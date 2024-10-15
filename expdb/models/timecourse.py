@@ -10,8 +10,8 @@ import enum
 import json
 
 from . import Base, Study, Subject  # Import the Base model
-from ..transforms import Transform
 
+# Base.metadata.drop_all(Base.engine)
 
 class Modality(enum.Enum):
     UNKNOWN = "UNKNOWN"
@@ -48,16 +48,14 @@ class Data:
         Modality of the data (e.g. EEG, MEG, fMRI, etc.)
     sampling_rate : int
         Sampling rate of the data (Hz)
-    path : str
-        File path to the data's cloud bucket.
     description : str
         Description of the data
     """
     sampling_rate: float
-    path: str
+    # path: str
     modality: Modality = Modality.UNKNOWN
     type: DataType = DataType.UNKNOWN
-    description: str = ""
+    # description: str = ""
 
     def __post_init__(self):
         # Validate that the provided modality is a valid enum value
@@ -70,7 +68,7 @@ class Data:
 
     def __repr__(self) -> str:
         return (f"Data({self.type}, {self.modality}, "
-                f"{self.sampling_rate}, {self.path}, {self.description})")
+                f"{self.sampling_rate})")
 
 class TransformData:
     """An object describing how a timecourse was created.
@@ -146,14 +144,16 @@ class Timecourse(Base):
     data: Mapped[Data] = composite(Data,
                                    mapped_column("sampling_rate", Float,
                                                  nullable=False),
-                                   mapped_column("path", String,
-                                                 nullable=False),
+                                #    mapped_column("path", String,
+                                #                  nullable=False),
                                    mapped_column("modality", Enum(Modality),
                                                  nullable=False),
                                    mapped_column("type", Enum(DataType),
-                                                 nullable=False),
-                                   mapped_column("description", String,
-                                                 nullable=True))
+                                                 nullable=False))
+    
+    path: Mapped[str] = mapped_column(String, nullable=False,
+                                      unique=True)
+    description: Mapped[str] = mapped_column(String, nullable=True)
 
     transform: Mapped[TransformData] = composite(
         TransformData,
