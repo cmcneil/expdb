@@ -115,12 +115,12 @@ class MyAdminIndexView(AdminIndexView):
                            timecourse_data=timecourse_data)
 
 
-def init_admin(app):
+def init_admin(app, db):
     # Initialize the Flask-Admin extension
     admin = Admin(app, name='Research Admin', template_mode='bootstrap3',
-                  index_view=MyAdminIndexView(app.session))
+                  index_view=MyAdminIndexView(db.session))
 
     # Add SQLAlchemy models to the admin interface
-    admin.add_view(SubjectAdmin(Subject, app.session))
-    admin.add_view(StudyAdmin(Study, app.session))
-    admin.add_view(TimecourseAdmin(Timecourse, app.session))
+    admin.add_view(SubjectAdmin(Subject, db.session))
+    admin.add_view(StudyAdmin(Study, db.session))
+    admin.add_view(TimecourseAdmin(Timecourse, db.session))

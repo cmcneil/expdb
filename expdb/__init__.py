@@ -3,4 +3,5 @@ __all__ = [
   "transforms",
   "db",
   "app",
+  "config",
 ]

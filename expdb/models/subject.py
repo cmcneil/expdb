@@ -19,6 +19,7 @@ class Subject(Base):
   id: Mapped[int] = mapped_column(Integer, primary_key=True)
   code: Mapped[str] = mapped_column(String(255), nullable=False, unique=True) # Two-character, i.e. "JH"
   name: Mapped[str] = mapped_column(String(255)) # Full name
+  email: Mapped[str] = mapped_column(String(255), nullable=True)
   age: Mapped[int] = mapped_column(Integer) # Years
   meditation_experience: Mapped[int] = mapped_column(Integer) # Years
 

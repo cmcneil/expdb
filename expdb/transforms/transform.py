@@ -27,6 +27,9 @@ class Transform(ABC):
         
         if timecourse is not None:
             sess = object_session(timecourse)
+            if timecourse.data != self.input_datatype:
+                raise ValueError("Timecourse data type does not match input "
+                                 "data type.")
 
         if sess:
             self.session = sess
@@ -102,7 +105,7 @@ class RawDataUpload(Transform):
     
     def __init__(self, data_type: Data, subject_code: str, study_name: str,
                  is_pilot: bool, file_path: str,
-                 date_collected: Optional[datetime.Datetime] = None):         
+                 date_collected: Optional[datetime] = None):         
         super().__init__(None, data_type=data_type, subject_code=subject_code,
                          study_name=study_name, is_pilot=is_pilot,
                          date_collected=date_collected, file_path=file_path)

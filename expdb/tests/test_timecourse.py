@@ -21,10 +21,8 @@ def test_timecourse_creation(session):
                       age=20, meditation_experience=5)
     data = Data(
         sampling_rate=256.0,
-        path="/data/bucket/scan_001.nii",
         modality=Modality.IMAGING,
-        type=DataType.FMRI,
-        description="fMRI scan from session 1"
+        type=DataType.FMRI
     )
     xfm = TransformData(
         transform_names_json="[]",
@@ -32,7 +30,9 @@ def test_timecourse_creation(session):
         git_commit="1234567"
     )
     timecourse = Timecourse(subject=subject, study=study, is_pilot=True,
-                            data=data, transform=xfm)
+                            data=data, transform=xfm,
+                            path="/data/bucket/scan_001.nii",
+                            description="fMRI scan from session 1")
 
     # Add and commit to the session
     session.add(timecourse)
@@ -53,10 +53,8 @@ def test_timecourse_propagation(session):
                       age=20, meditation_experience=5)
     data = Data(
         sampling_rate=256.0,
-        path="/data/bucket/scan_001.nii",
         modality=Modality.IMAGING,
-        type=DataType.FMRI,
-        description="fMRI scan from session 1"
+        type=DataType.FMRI
     )
     # Provide valid TransformData
     transform_data = TransformData(
@@ -65,28 +63,36 @@ def test_timecourse_propagation(session):
         git_commit="abc123"
     )
     timecourse = Timecourse(subject=subject, study=study, is_pilot=True,
-                            data=data, transform=transform_data)
+                            data=data, transform=transform_data,
+                            path="/data/bucket/scan_002.nii",
+                            description="fMRI scan from session 1")
 
     tc1 = Timecourse(subject=subject, study=study, is_pilot=True, data=data,
-                     transform=transform_data)
+                     transform=transform_data,
+                            path="/data/bucket/scan_001.nii",
+                            description="fMRI scan from session 1")
     tc2 = Timecourse(subject=subject, study=study, is_pilot=True, data=data,
-                     transform=transform_data)
+                     transform=transform_data,
+                            path="/data/bucket/scan_003.nii",
+                            description="fMRI scan from session 1")
     tc3 = Timecourse(subject=subject, study=study, is_pilot=True, data=data,
-                     transform=transform_data)
+                     transform=transform_data,
+                            path="/data/bucket/scan_004.nii",
+                            description="fMRI scan from session 1")
 
     # Establish lineage
     tc2.derived_from.append(tc1)  # tc2 is derived from tc1
     tc3.derived_from.append(tc2)  # tc3 is derived from tc2
 
     session.add_all([tc1, tc2, tc3])
-    print("PROPOGATION 4")
+    # print("PROPOGATION 4")
     session.commit()
 
     # Deactivate tc1
     tc2.is_pilot = False
     session.commit()
 
-    print("PROPOGATION 4")
+    # print("PROPOGATION 4")
 
     # Check that the flag propagated correctly
     assert not tc1.is_pilot
@@ -117,14 +123,14 @@ def test_timecourse_invalid_enum_values(session):
     
     # Invalid modality
     with pytest.raises(ValueError):
-        data = Data(sampling_rate=256.0, path="/data/invalid", modality="INVALID", type=DataType.FMRI)  # pytype: disable=wrong-arg-types
+        data = Data(sampling_rate=256.0, modality="INVALID", type=DataType.FMRI)  # pytype: disable=wrong-arg-types
         transform_data = TransformData(
         transform_names_json=json.dumps(["ValidTransform"]),
             transform_params_json=json.dumps([{'param1': 1}]),
             git_commit="abc123"
         )
         timecourse = Timecourse(subject=subject, study=study, is_pilot=True, data=data,
-                                transform=transform_data)
+                                transform=transform_data,  path="/data/invalid")
         session.add(timecourse)
         session.commit()
     
@@ -136,14 +142,14 @@ def test_timecourse_valid_creation(session):
     '''Test valid creation of a Timecourse.'''
     study = Study(name="Test Study", github_repo="test/repo")
     subject = Subject(name="Testy McTesterson", code="TT", age=20, meditation_experience=5)
-    data = Data(sampling_rate=256.0, path="/data/valid", modality=Modality.IMAGING, type=DataType.FMRI)
+    data = Data(sampling_rate=256.0, modality=Modality.IMAGING, type=DataType.FMRI)
     transform_data = TransformData(
         transform_names_json=json.dumps(["ValidTransform"]),
         transform_params_json=json.dumps([{'param1': 1}]),
         git_commit="abc123"
     )
     timecourse = Timecourse(subject=subject, study=study, is_pilot=True,
-                            data=data, transform=transform_data)
+                            data=data, transform=transform_data, path="/data/valid")
     session.add(timecourse)
     session.commit()
 
@@ -163,10 +169,8 @@ def test_valid_transform_data(session):
     # Provide valid Data object
     data = Data(
         sampling_rate=256.0,
-        path="/data/valid",
         modality=Modality.IMAGING,
-        type=DataType.FMRI,
-        description="Valid data"
+        type=DataType.FMRI
     )
     
     # Provide valid TransformData
@@ -176,7 +180,10 @@ def test_valid_transform_data(session):
         git_commit="abc123"
     )
     
-    timecourse = Timecourse(subject=subject, study=study, is_pilot=True, data=data, transform=transform_data)
+    timecourse = Timecourse(subject=subject, study=study, is_pilot=True,
+                            path="/data/valid",
+                            data=data, transform=transform_data,
+                            description="Valid data")
     
     session.add(timecourse)
     session.commit()  # Should not raise any exceptions
@@ -189,10 +196,8 @@ def test_malformed_json_transform_params(session):
     # Provide valid Data object
     data = Data(
         sampling_rate=256.0,
-        path="/data/valid",
         modality=Modality.IMAGING,
-        type=DataType.FMRI,
-        description="Valid data"
+        type=DataType.FMRI
     )
     
     # Provide invalid JSON for the params

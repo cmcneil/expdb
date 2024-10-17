@@ -17,3 +17,10 @@ def init_db():
 
 def flush_db():
     Base.metadata.drop_all(engine)
+
+def dump_contents():
+    for table_class in Base.__subclasses__():
+        print(f"\nContents of table '{table_class.__tablename__}':")
+        rows = session.query(table_class).all()  # Query all rows
+        for row in rows:
+            print(row)
