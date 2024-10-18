@@ -178,7 +178,7 @@ def save_mne_raw(data: mne.io.Raw) -> io.BytesIO:
     bytes_io = io.BytesIO()
     with tempfile.NamedTemporaryFile(delete=False, suffix='.fif') as temp_file:
         temp_file_name = temp_file.name
-        data.save(temp_file_name)
+        data.save(temp_file_name, overwrite=True)
 
     with open(temp_file_name, 'rb') as temp_file:
     # Create a BytesIO object and load the contents of the temp file
