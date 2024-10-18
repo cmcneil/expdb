@@ -10,7 +10,7 @@ class Config:
     SQLALCHEMY_DATABASE_URI = f"postgresql+psycopg2://{DB_USER}:{DB_PASSWORD}@{DB_HOST}/{DB_NAME}"
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SECRET_KEY = os.getenv('SECRET_KEY', 'a-secure-default-key')
-    GS_BUCKET_NAME = os.getenv('GS_BUCKET_NAME', 'expdb')
+    GS_BUCKET_NAME = os.getenv('GS_BUCKET_NAME', 'alembiclabs_expdb')
     UPLOAD_FOLDER = 'uploads'
 
 class DevelopmentConfig(Config):
