@@ -11,6 +11,7 @@ from sqlalchemy.orm import scoped_session
 from wtforms import SubmitField
 from wtforms_sqlalchemy.orm import model_form
 
+from datetime import datetime
 import os
 
 
@@ -95,6 +96,8 @@ def create_app():
             # Validate the file and save it
             file.save(os.path.join(app.config['UPLOAD_FOLDER'], file.filename))
             path = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
+            parsed_datetime = datetime.strptime(
+                request.form.get('date_collected'), '%Y-%m-%dT%H:%M')
 
             raw_upload_xfm = RawDataUpload[Any](
                 data_type=data,
@@ -104,7 +107,7 @@ def create_app():
                 study=study,
                 is_pilot=request.form.get('is_pilot'),
                 file_path=path,
-                date_collected=request.form.get('date_collected'))
+                date_collected=parsed_datetime)
 
             raw_upload_xfm.apply_transform()
             raw_upload_xfm.commit()
