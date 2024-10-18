@@ -38,7 +38,7 @@ def construct_gs_url(timecourse: Timecourse) -> str:
     Returns:
         str: Google Cloud Storage path.
     """
-    ext = DATATYPE_TO_EXTENSION[timecourse.data_type]
+    ext = DATATYPE_TO_EXTENSION[timecourse.data.type]
     gs_path = (f"{CONFIG.GS_BUCKET_NAME}/{timecourse.study.name}/"
                f"{timecourse.subject.code}/{timecourse.data.modality}/"
                f"{timecourse.data.type}/"
