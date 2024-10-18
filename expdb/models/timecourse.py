@@ -48,8 +48,6 @@ class Data:
         Modality of the data (e.g. EEG, MEG, fMRI, etc.)
     sampling_rate : int
         Sampling rate of the data (Hz)
-    description : str
-        Description of the data
     """
     sampling_rate: float
     # path: str

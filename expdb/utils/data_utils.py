@@ -10,6 +10,7 @@ from google.cloud import storage
 import mne
 import cv2  # OpenCV for video
 from pydub import AudioSegment
+import os
 
 
 DATATYPE_TO_EXTENSION = {
@@ -21,7 +22,14 @@ DATATYPE_TO_EXTENSION = {
     DataType.VIDEO: "mp4",
 }
 
+# DT_TO_TYPE = {
+#     DataType.EEG: mne.io.BaseRaw,
+# }
+
 CONFIG = get_config()
+
+TimecoursePayload = Union[mne.io.BaseRaw, Dict[str, np.ndarray],
+                          pd.DataFrame, np.ndarray]
 
 def construct_gs_url(timecourse: Timecourse) -> str:
     """
@@ -38,19 +46,21 @@ def construct_gs_url(timecourse: Timecourse) -> str:
     return f"gs://{gs_path}"
 
 
-def load_bdf(data_bytes: bytes) -> mne.io.BaseRaw:
+def load_bdf(path: str) -> mne.io.BaseRaw:
     """
     Loads EEG data from a BDF file stored in memory as bytes.
     
     Args:
-        data_bytes (bytes): BDF file content in bytes.
+        path: BDF file.
     
     Returns:
         mne.io.BaseRaw: The loaded EEG data.
     """
-    with io.BytesIO(data_bytes) as bdf_file:
-        raw = mne.io.read_raw_bdf(bdf_file, preload=True)
-        return raw
+    raw = mne.io.read_raw_bdf(path, preload=True)
+    return raw
+    # with io.BytesIO(data_bytes) as bdf_file:
+    #     raw = mne.io.read_raw_bdf(bdf_file, preload=True)
+    #     return raw
 
 def load_npz(data_bytes: bytes) -> Dict[str, np.ndarray]:
     """
@@ -222,15 +232,16 @@ def save_audio(data: np.ndarray, file_path: str) -> io.BytesIO:
     return bytes_io
     
 
-def bytes_to_data(data_bytes: bytes, ext: str) -> Union[mne.io.BaseRaw,
-                                             Dict[str, np.ndarray],
-                                             pd.DataFrame,
-                                             np.ndarray]:
+def bytes_to_data(data_bytes: bytes, ext: str) -> TimecoursePayload:
     
     # Determine the file type based on file extension
     if ext == "bdf":
         # Load EEG data from .bdf file
-        eeg_data = load_bdf(data_bytes)
+        path = '/tmp/temp_bdf.bdf'
+        with open('/tmp/temp_bdf.bdf', 'wb') as f:
+            f.write(data_bytes)
+        eeg_data = load_bdf(path)
+        os.remove(path)
         return eeg_data
     elif ext == ".npz":
         # Load .npz file into a dictionary of numpy arrays
@@ -254,10 +265,7 @@ def bytes_to_data(data_bytes: bytes, ext: str) -> Union[mne.io.BaseRaw,
     else:
         raise ValueError("Unsupported file format")
 
-def load_data_from_gcs(gs_path: str) -> Union[mne.io.BaseRaw,
-                                              Dict[str, np.ndarray],
-                                              pd.DataFrame,
-                                              np.ndarray]:
+def load_data_from_gcs(gs_path: str) -> TimecoursePayload:
     """
     Loads data from a Google Cloud Storage bucket, determines the file type, 
     and returns the data loaded into an appropriate data structure.
@@ -286,10 +294,7 @@ def load_data_from_gcs(gs_path: str) -> Union[mne.io.BaseRaw,
     
     return bytes_to_data(data_bytes, blob_path.split(".")[-1])
 
-def load_data_from_local(path: str) -> Union[mne.io.BaseRaw,
-                                              Dict[str, np.ndarray],
-                                              pd.DataFrame,
-                                              np.ndarray]:
+def load_data_from_local(path: str) -> TimecoursePayload:
     """
     Loads data from a local path, determines the file type, and returns the data
     loaded into an appropriate data structure.
@@ -306,8 +311,7 @@ def load_data_from_local(path: str) -> Union[mne.io.BaseRaw,
     return bytes_to_data(data_bytes, path.split(".")[-1])
     
 # Re-upload data to GCS based on file extension
-def reupload_data_to_gcs(data: Union[mne.io.BaseRaw, Dict[str, np.ndarray],
-                                     pd.DataFrame, np.ndarray],
+def reupload_data_to_gcs(data: TimecoursePayload,
                          gs_path: str) -> None:
     """
     Re-upload data to GCS, saving the file in the appropriate format based on the file extension.

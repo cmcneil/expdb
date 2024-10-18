@@ -1,4 +1,6 @@
-from flask import Flask, request, redirect, url_for, render_template, jsonify
+from typing import Any
+
+from flask import Flask, flash, request, redirect, url_for, render_template, jsonify
 from flask_admin import Admin
 from flask_admin.contrib.sqla import ModelView
 from flask_sqlalchemy import SQLAlchemy
@@ -9,10 +11,14 @@ from sqlalchemy.orm import scoped_session
 from wtforms import SubmitField
 from wtforms_sqlalchemy.orm import model_form
 
+import os
+
 
 from ..config import get_config
 # from ..db import Session
-from ..models import Base, Subject, Study
+from ..models import Base, Data, DataType, Modality, Subject, Study, Timecourse
+from ..transforms import RawDataUpload
+from ..utils import data_utils as du
 
 
 from .admin import init_admin  # Import the admin panel setup
@@ -45,6 +51,11 @@ def create_app():
     class SubmitStudyForm(StudyForm):
         submit = SubmitField('Submit')
 
+    # TimecourseForm = model_form(Timecourse, base_class=FlaskForm,
+    #                             db_session=db.session)
+    # class SubmitTimecourseForm(TimecourseForm):
+    #     submit = SubmitField('Submit')
+
     # Basic route for testing
     @app.route('/')
     def index():
@@ -55,21 +66,66 @@ def create_app():
     def upload_data():
         subject_form = SubmitSubjectForm(request.form)
         study_form = SubmitStudyForm(request.form)
+        # timecourse_form = SubmitTimecourseForm(request.form)
+
         if request.method == 'POST':
             # Get form data
-            subject_id = request.form.get('subject_id')
-            study_id = request.form.get('study_id')
-            path = request.form.get('path')
-            description = request.form.get('description')
+            # ext = '.' + request.form.get('path').split('.')[-1]
+            # dt = [t for t, e in du.DATATYPE_TO_EXTENSION.items() if e == ext][0]
+            data_type = DataType(request.form.get('data_type'))
+            modality = Modality(request.form.get('modality'))
+            data = Data(sampling_rate=request.form.get('sampling_rate'),
+                        modality=modality, type=data_type)
+            
+            subject = db.session.get(Subject, request.form.get('subject_id'))
+            study = db.session.get(Study, request.form.get('study_id'))
+            
+            # Process file upload
+            if 'file' not in request.files:
+                flash('No file part')
+                return redirect(request.url)
 
-            # Assuming process_timecourse handles the logic to create a Timecourse object
-            # new_timecourse = process_timecourse(subject_id, study_id, path, description)
+            file = request.files['file']
 
-            # # Add the new timecourse to the database
-            # session.add(new_timecourse)
-            # session.commit()
+            # Check if a file was selected
+            if file.filename == '':
+                flash('No selected file')
+                return redirect(request.url)
 
-            return redirect(url_for('upload_data'), subject_form=subject_form)  # Redirect back to the form after success
+            # Validate the file and save it
+            file.save(os.path.join(app.config['UPLOAD_FOLDER'], file.filename))
+            path = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
+
+            raw_upload_xfm = RawDataUpload[Any](
+                data_type=data,
+                # subject_code=request.form.get('subject_code'),
+                # study_name=request.form.get('study_name'),
+                subject=subject,
+                study=study,
+                is_pilot=request.form.get('is_pilot'),
+                file_path=path,
+                date_collected=request.form.get('date_collected'))
+
+            raw_upload_xfm.apply_transform()
+            raw_upload_xfm.commit()
+
+            # Here you can save the form data and file info to a database if needed
+            flash('Form submitted successfully!')
+            return redirect(url_for('upload_data'))
+
+            # subject_id = request.form.get('subject_id')
+            # study_id = request.form.get('study_id')
+            # path = request.form.get('path')
+            # description = request.form.get('description')
+
+            # # Assuming process_timecourse handles the logic to create a Timecourse object
+            # # new_timecourse = process_timecourse(subject_id, study_id, path, description)
+
+            # # # Add the new timecourse to the database
+            # # session.add(new_timecourse)
+            # # session.commit()
+
+            # return redirect(url_for('upload_data'), subject_form=subject_form)  # Redirect back to the form after success
 
         # Query available subjects and studies for the dropdowns
         subjects = db.session.query(Subject).all()
@@ -77,7 +133,9 @@ def create_app():
 
         return render_template('upload_data.html', subjects=subjects,
                                studies=studies, subject_form=subject_form,
-                               study_form=study_form)
+                               study_form=study_form,
+                               modality_values=[e.value for e in Modality],
+                               data_type_values=[e.value for e in DataType])
 
     # API route to handle creation of a new subject or study via AJAX
     @app.route('/create_subject', methods=['POST'])

@@ -12,35 +12,74 @@
 <body>
     <div class="container">
         <h1>Upload a Timecourse</h1>
+
+        <!-- Display flash messages -->
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                <ul>
+                    {% for message in messages %}
+                        <li>{{ message }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        {% endwith %}
         
-        <form action="{{ url_for('upload_data') }}" method="POST">
+        <form action="{{ url_for('upload_data') }}" method="POST" enctype="multipart/form-data">
             <!-- Dropdown for selecting subject -->
-            <label for="subject_code">Select Subject:</label>
-            <select name="subject_code" id="subject_code" class="form-select" required>
+            <label for="subject_id">Select Subject:</label>
+            <select name="subject_id" id="subject_id" class="form-select" required>
                 {% for subject in subjects %}
-                    <option value="{{ subject.code }}">{{ subject.code }}</option>
+                    <option value="{{ subject.id }}">{{ subject.code }}</option>
                 {% endfor %}
             </select> 
             <button type="button" class="btn btn-secondary" onclick="openCreateSubjectModal()">Create New Subject</button>
-        </br></br>
-            <!-- Dropdown for selecting study -->
-            <label for="study_id">Select Study:</label>
-            <select name="study_id" id="study_id" class="form-select" required>
-                {% for study in studies %}
-                    <option value="{{ study.id }}">{{ study.name }}</option>
-                {% endfor %}
-            </select>
-       
-            <button type="button" class="btn btn-secondary" onclick="openCreateStudyModal()">Create New Study</button>
-        </br></br>
-            <!-- Path and Description inputs -->
-            <label for="path">Path:</label>
-            <input type="file" name="path" id="path" class="form-control" required>
-        </br>
-            <label for="description">Description:</label>
-            <textarea name="description" id="description" class="form-control" required></textarea>
-        </br>
-            <button type="submit" class="btn btn-primary">Submit</button>
+            </br></br>
+                <!-- Dropdown for selecting study -->
+                <label for="study_id">Select Study:</label>
+                <select name="study_id" id="study_id" class="form-select" required>
+                    {% for study in studies %}
+                        <option value="{{ study.id }}">{{ study.name }}</option>
+                    {% endfor %}
+                </select>
+        
+                <button type="button" class="btn btn-secondary" onclick="openCreateStudyModal()">Create New Study</button>
+            </br></br>
+                <!-- Path and Description inputs -->
+                <label for="file">File:</label>
+                <input type="file" name="file" id="file" class="form-control" required>
+            </br>
+                <label for="description">Description:</label>
+                <textarea name="description" id="description" class="form-control" required></textarea>
+            </br>
+            </br>
+                <label for="sampling_rate">Sampling Rate:</label>
+                <input type="number" name="sampling_rate" id="sampling_rate" class="form-control" step="0.01" min="0" required>
+            </br>
+            </br>
+                <label for="modality">Modality:</label>
+                <select name="modality" id="modality" class="form-select" required>
+                    {% for m in modality_values %}
+                        <option value="{{ m }}">{{ m }}</option>
+                    {% endfor %}
+                </select>
+            </br>
+            </br>
+                <label for="data_type">Data Type:</label>
+                <select name="data_type" id="data_type" class="form-select" required>
+                    {% for dt in data_type_values %}
+                        <option value="{{ dt }}">{{ dt }}</option>
+                    {% endfor %}
+                </select>
+            </br>
+            </br>
+                <label for="date_collected">Date Collected:</label>
+                <input type="datetime-local" name="date_collected" id="date_collected" 
+                    class="form-control"  required>
+            </br>
+                <label for="is_pilot">Is Pilot?</label>
+                <input type="checkbox" name="is_pilot" id="is_pilot" class="form-check-input">
+            </br></br>
+                <button type="submit" class="btn btn-primary">Submit</button>
         </form>
     </div>
 

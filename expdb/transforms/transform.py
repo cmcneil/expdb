@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, Generic, List, Optional, Tuple, TypeVar
 
 from sqlalchemy import text
 from sqlalchemy.orm import object_session
@@ -16,30 +16,38 @@ from ..utils import git_utils
 CONFIG = get_config()
 
 
-class Transform(ABC):
+T = TypeVar('T',  bound=du.TimecoursePayload)
+U = TypeVar('U',  bound=du.TimecoursePayload)
+
+class Transform(ABC, Generic[T, U]):
     input_datatype: Data
     output_datatype: Data
 
-    def __init__(self, timecourse: Timecourse, **params: Dict[str, Any]):
+    def __init__(self, timecourse: Optional[Timecourse],
+                 **params):
         self.params = params
         self.data = None
         sess = None
+        self.input_timecourses = []
         
         if timecourse is not None:
             sess = object_session(timecourse)
             if timecourse.data != self.input_datatype:
                 raise ValueError("Timecourse data type does not match input "
                                  "data type.")
+            self.input_timecourses.append(timecourse)
 
         if sess:
             self.session = sess
-            self.input_timecourse = timecourse
+            
         else:
             self.session = Session()
-            self.input_timecourse = self.session.merge(timecourse)
+            if timecourse is not None:
+                tc = self.session.merge(timecourse)
+                self.input_timecourses.append(tc)
 
     @abstractmethod
-    def transform(self, data) -> Any:
+    def transform(self, data: T) -> U:
         raise NotImplementedError
     
     def _transform_names(self) -> List[str]:
@@ -78,7 +86,7 @@ class Transform(ABC):
             data=self.output_datatype,
             transform=transform_data,
             is_pilot=self.input_timecourses[0].is_pilot,
-            date_collected = datetime.now.astimezone()
+            date_collected = datetime.now().astimezone()
 
         )
         for parent in self.input_timecourses:
@@ -91,8 +99,10 @@ class Transform(ABC):
         
 
     def _load_data(self):
-        path = self.timecourse.path
-        self.data = du.load_data(path)
+        self.data = []
+        for tc in self.input_timecourses:
+            path = tc.path
+            self.data.append(du.load_data_from_gcs(path))
         
     def commit(self):
         du.reupload_data_to_gcs(self.out_data,
@@ -101,36 +111,39 @@ class Transform(ABC):
         self.session.commit()
         
 
-class RawDataUpload(Transform):
+W = TypeVar('W', bound=du.TimecoursePayload)
+class RawDataUpload(Transform[W, W], Generic[W]):
     
-    def __init__(self, data_type: Data, subject_code: str, study_name: str,
+    def __init__(self, data_type: Data, subject: Subject, study: Study,
                  is_pilot: bool, file_path: str,
-                 date_collected: Optional[datetime] = None):         
-        super().__init__(None, data_type=data_type, subject_code=subject_code,
-                         study_name=study_name, is_pilot=is_pilot,
+                 date_collected: Optional[datetime] = None):    
+        super().__init__(None, data_type=data_type, subject=subject,
+                         study=study, is_pilot=is_pilot,
                          date_collected=date_collected, file_path=file_path)
         self.output_datatype = data_type
         self.date_collected = date_collected
         self.file_path = file_path
-        self.subject = self.session.query(Subject).filter_by(code=subject_code
-                                                        ).one_or_none()
-        self.study = self.session.query(Study).filter_by(name=study_name
-                                                    ).one_or_none()
+        self.study = study
+        self.subject = subject
+        # self.subject = self.session.query(Subject).filter_by(code=subject_code
+        #                                                 ).one_or_none()
+        # self.study = self.session.query(Study).filter_by(name=study_name
+        #                                             ).one_or_none()
 
         self.is_pilot = is_pilot
-        if self.subject is None:
-            raise ValueError(f"Subject with code '{subject_code}' does not exist.")
-        if self.study is None:
-            raise ValueError(f"Study with name '{study_name}' does not exist.")
+        # if self.subject is None:
+        #     raise ValueError(f"Subject with code '{subject_code}' does not exist.")
+        # if self.study is None:
+        #     raise ValueError(f"Study with name '{study_name}' does not exist.")
 
     def _construct_new_timecourse(self):
         # Get an ID for the timecourse.
         result = self.session.execute(
-            text("SELECT nextval('timecourse_id_seq')"))
+            text("SELECT nextval('timecourses_id_seq')"))
         next_id = result.scalar()
 
         if self.date_collected is None:
-            self.date_collected = datetime.now.astimezone()
+            self.date_collected = datetime.now().astimezone()
 
         new_timecourse = Timecourse(
             id=next_id,
@@ -149,5 +162,5 @@ class RawDataUpload(Transform):
     def _load_data(self):
         self.data = du.load_data_from_local(self.file_path)
 
-    def transform(self, data) -> Any:
+    def transform(self, data: W) -> W:
         return data

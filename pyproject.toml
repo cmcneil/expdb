@@ -9,7 +9,7 @@ packages = [{include = "expdb"}]
 [tool.poetry.dependencies]
 python = "^3.12"
 sqlalchemy = "*"
-#psycopg2 = "*"
+psycopg2 = "*"
 alembic = "*"
 Flask = "*"
 Flask-Admin = "*"
