@@ -151,6 +151,7 @@ class RawDataUpload(Transform[W, W], Generic[W]):
         next_id = result.scalar()
 
         if self.date_collected is None:
+            print("DEBUG: No date collected")
             self.date_collected = datetime.now().astimezone()
 
         new_timecourse = Timecourse(
