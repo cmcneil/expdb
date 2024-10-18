@@ -411,7 +411,7 @@ def reupload_data_to_gcs(data: TimecoursePayload,
     print(f"Uploading file to: {gs_path} using gsutil")
     try:
         subprocess.run(
-            ["gsutil", "cp", temp_filename, gs_path],
+            ["gcloud", "storage", "cp", temp_filename, gs_path],
             check=True  # Raises CalledProcessError on failure
         )
         print(f"File uploaded to: {gs_path}")
