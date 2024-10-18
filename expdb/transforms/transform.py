@@ -113,8 +113,8 @@ class Transform(ABC, Generic[T, U]):
             self.data.append(du.load_data_from_gcs(path))
         
     def commit(self):
-        du.reupload_data_to_gcs(self.out_data,
-                                self.new_timecourse.path)
+        # du.reupload_data_to_gcs(self.out_data,
+        #                         self.new_timecourse.path)
         self.session.add(self.new_timecourse)
         self.session.commit()
         

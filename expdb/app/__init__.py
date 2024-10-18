@@ -105,7 +105,7 @@ def create_app():
                 # study_name=request.form.get('study_name'),
                 subject=subject,
                 study=study,
-                is_pilot=request.form.get('is_pilot'),
+                is_pilot=request.form.get('is_pilot') == "on",
                 file_path=path,
                 date_collected=parsed_datetime)
 
