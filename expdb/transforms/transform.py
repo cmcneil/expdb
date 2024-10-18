@@ -1,5 +1,6 @@
 from typing import Any, Dict, Generic, List, Optional, Tuple, TypeVar
 
+import sqlalchemy.orm
 from sqlalchemy import text
 from sqlalchemy.orm import object_session
 
@@ -32,6 +33,7 @@ class Transform(ABC, Generic[T, U]):
     output_datatype: Data
 
     def __init__(self, timecourse: Optional[Timecourse],
+                 session: Optional[sqlalchemy.orm.Session],
                  **params):
         self.params = params
         self.data = None
@@ -39,20 +41,16 @@ class Transform(ABC, Generic[T, U]):
         self.input_timecourses = []
         
         if timecourse is not None:
-            sess = object_session(timecourse)
             if timecourse.data != self.input_datatype:
                 raise ValueError("Timecourse data type does not match input "
                                  "data type.")
+            self.session = object_session(timecourse)
             self.input_timecourses.append(timecourse)
-
-        if sess:
-            self.session = sess
-            
+        elif session is not None:
+            self.session = session
         else:
             self.session = Session()
-            if timecourse is not None:
-                tc = self.session.merge(timecourse)
-                self.input_timecourses.append(tc)
+
 
     @abstractmethod
     def transform(self, data: T) -> U:
@@ -127,7 +125,7 @@ class RawDataUpload(Transform[W, W], Generic[W]):
     def __init__(self, data_type: Data, subject: Subject, study: Study,
                  is_pilot: bool, file_path: str,
                  date_collected: Optional[datetime] = None):    
-        super().__init__(None)
+        super().__init__(None, session=object_session(study))
         self.output_datatype = data_type
         self.date_collected = date_collected
         self.file_path = file_path

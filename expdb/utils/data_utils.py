@@ -46,8 +46,8 @@ def construct_gs_url(timecourse: Timecourse) -> str:
     # print(timecourse.date_collected.strftime('%Y%m%d_%H%M%S'))
     # print(timecourse)
     gs_path = (f"{CONFIG.GS_BUCKET_NAME}/{timecourse.study.name}/"
-               f"{timecourse.subject.code}/{timecourse.data.modality}/"
-               f"{timecourse.data.type}/"
+               f"{timecourse.subject.code}/{timecourse.data.modality.value}/"
+               f"{timecourse.data.type.value}/"
                f"{timecourse.date_collected.strftime('%Y%m%d_%H%M%S')}.{ext}")
     return f"gs://{gs_path}"
 
@@ -378,16 +378,16 @@ def reupload_data_to_gcs(data: TimecoursePayload,
     storage_client = storage.Client()
     
     # Extract bucket and blob names from the `gs://` path
-    if gs_path.startswith("gs://"):
-        gs_path = gs_path[5:]
-    bucket_name, blob_path = gs_path.split("/", 1)
+    # if gs_path.startswith("gs://"):
+    #     gs_path = gs_path[5:]
+    # bucket_name, blob_path = gs_path.split("/", 1)
     
-    # Get bucket and blob objects
-    bucket = storage_client.bucket(bucket_name)
-    blob = bucket.blob(blob_path)
+    # # Get bucket and blob objects
+    # bucket = storage_client.bucket(bucket_name)
+    # blob = bucket.blob(blob_path)
 
     # Determine the file extension and save data accordingly
-    if blob_path.endswith(".bdf"):
+    if gs_path.endswith(".bdf"):
         # Save EEG data to .bdf file
         temp_filename = save_bdf(data)
     # elif blob_path.endswith(".npz"):
@@ -402,7 +402,7 @@ def reupload_data_to_gcs(data: TimecoursePayload,
     # elif blob_path.endswith(('.mp3', '.wav')):
     #     # Save audio data as an audio file
     #     bytes_io = save_audio(data, blob_path)
-    elif blob_path.endswith(".fif"):
+    elif gs_path.endswith(".fif"):
         # Save MNE Raw object to .fif file
         temp_filename = save_mne_raw(data)
     else:
