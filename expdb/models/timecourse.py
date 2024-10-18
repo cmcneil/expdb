@@ -67,6 +67,10 @@ class Data:
     def __repr__(self) -> str:
         return (f"Data({self.type}, {self.modality}, "
                 f"{self.sampling_rate})")
+    
+    def __json__(self):
+        return dataclasses.asdict(self)
+
 
 class TransformData:
     """An object describing how a timecourse was created.

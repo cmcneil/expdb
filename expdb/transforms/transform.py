@@ -19,6 +19,14 @@ CONFIG = get_config()
 T = TypeVar('T',  bound=du.TimecoursePayload)
 U = TypeVar('U',  bound=du.TimecoursePayload)
 
+# Custom JSON Encoder that looks for __json__
+class CustomParamsEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if hasattr(obj, "__json__"):
+            return obj.__json__()
+        return super().default(obj)
+
+
 class Transform(ABC, Generic[T, U]):
     input_datatype: Data
     output_datatype: Data
@@ -60,8 +68,10 @@ class Transform(ABC, Generic[T, U]):
         if not (CONFIG.DEBUG or git_utils.no_uncommitted_changes()):
             raise Exception("Git repo has uncommitted changes.")
         transform_data = TransformData(
-            transform_names_json=json.dumps(self._transform_names()),
-            transform_params_json=json.dumps(self._transform_params()),
+            transform_names_json=json.dumps(self._transform_names(),
+                                            cls=CustomParamsEncoder),
+            transform_params_json=json.dumps(self._transform_params(),
+                                             cls=CustomParamsEncoder),
             git_commit=git_utils.get_most_recent_commit()
         )
         return transform_data
@@ -117,9 +127,7 @@ class RawDataUpload(Transform[W, W], Generic[W]):
     def __init__(self, data_type: Data, subject: Subject, study: Study,
                  is_pilot: bool, file_path: str,
                  date_collected: Optional[datetime] = None):    
-        super().__init__(None, data_type=data_type, subject=subject,
-                         study=study, is_pilot=is_pilot,
-                         date_collected=date_collected, file_path=file_path)
+        super().__init__(None)
         self.output_datatype = data_type
         self.date_collected = date_collected
         self.file_path = file_path
