@@ -11,6 +11,7 @@ import mne
 import cv2  # OpenCV for video
 from pydub import AudioSegment
 import os
+import subprocess
 import tempfile
 
 
@@ -144,7 +145,7 @@ def load_audio(data_bytes):
         samples = np.array(audio_segment.get_array_of_samples())
         return samples
     
-def save_bdf(data: mne.io.Raw) -> io.BytesIO:
+def save_bdf(data: mne.io.Raw) -> str:
     """
     Save EEG data to a .fif file and return it as a byte stream.
     
@@ -152,20 +153,20 @@ def save_bdf(data: mne.io.Raw) -> io.BytesIO:
         data: EEG data to be saved.
     
     Returns:
-        io.BytesIO: Byte stream containing the .bdf file content.
+        File path
     """
-    bytes_io = io.BytesIO()
+    # bytes_io = io.BytesIO()
     with tempfile.NamedTemporaryFile(delete=False, suffix='.bdf') as temp_file:
         temp_file_name = temp_file.name
         mne.export.export_raw(temp_file_name, data)
 
-    with open(temp_file_name, 'rb') as temp_file:
-    # Create a BytesIO object and load the contents of the temp file
-        bytes_io = io.BytesIO(temp_file.read())
-    os.remove(temp_file_name)
-    return bytes_io
+    # with open(temp_file_name, 'rb') as temp_file:
+    # # Create a BytesIO object and load the contents of the temp file
+    #     bytes_io = io.BytesIO(temp_file.read())
+    # os.remove(temp_file_name)
+        return temp_file_name
 
-def save_mne_raw(data: mne.io.Raw) -> io.BytesIO:
+def save_mne_raw(data: mne.io.Raw) -> str:
     """
     Save EEG data to a .bdf file and return it as a byte stream.
     
@@ -178,104 +179,105 @@ def save_mne_raw(data: mne.io.Raw) -> io.BytesIO:
     with tempfile.NamedTemporaryFile(delete=False, suffix='_eeg.fif') as temp_file:
         temp_file_name = temp_file.name
         data.save(temp_file_name, overwrite=True)
+        return temp_file_name
 
-    with open(temp_file_name, 'rb') as temp_file:
-    # Create a BytesIO object and load the contents of the temp file
-        bytes_io = io.BytesIO(temp_file.read())
-    os.remove(temp_file_name)
-    bytes_io.seek(0)
-    return bytes_io
+    # with open(temp_file_name, 'rb') as temp_file:
+    # # Create a BytesIO object and load the contents of the temp file
+    #     bytes_io = io.BytesIO(temp_file.read())
+    # os.remove(temp_file_name)
+    # bytes_io.seek(0)
+    # return bytes_io
 
 # Helper function to save numpy arrays to NPZ format
-def save_npz(data: Dict[str, np.ndarray]) -> io.BytesIO:
-    """
-    Save a dictionary of numpy arrays to a .npz file and return it as a byte stream.
+# def save_npz(data: Dict[str, np.ndarray]) -> io.BytesIO:
+#     """
+#     Save a dictionary of numpy arrays to a .npz file and return it as a byte stream.
     
-    Args:
-        data: Dictionary of numpy arrays.
+#     Args:
+#         data: Dictionary of numpy arrays.
     
-    Returns:
-        io.BytesIO: Byte stream containing the .npz file content.
-    """
-    bytes_io = io.BytesIO()
-    np.savez(bytes_io, **data)
-    bytes_io.seek(0)  # Reset stream pointer
-    return bytes_io
+#     Returns:
+#         io.BytesIO: Byte stream containing the .npz file content.
+#     """
+#     bytes_io = io.BytesIO()
+#     np.savez(bytes_io, **data)
+#     bytes_io.seek(0)  # Reset stream pointer
+#     return bytes_io
 
-# Helper function to save pandas DataFrame to Parquet format
-def save_parquet(data: pd.DataFrame) -> io.BytesIO:
-    """
-    Save a pandas DataFrame to a Parquet file and return it as a byte stream.
+# # Helper function to save pandas DataFrame to Parquet format
+# def save_parquet(data: pd.DataFrame) -> io.BytesIO:
+#     """
+#     Save a pandas DataFrame to a Parquet file and return it as a byte stream.
     
-    Args:
-        data: The pandas DataFrame to be saved.
+#     Args:
+#         data: The pandas DataFrame to be saved.
     
-    Returns:
-        io.BytesIO: Byte stream containing the Parquet file content.
-    """
-    bytes_io = io.BytesIO()
-    data.to_parquet(bytes_io)
-    bytes_io.seek(0)  # Reset stream pointer
-    return bytes_io
+#     Returns:
+#         io.BytesIO: Byte stream containing the Parquet file content.
+#     """
+#     bytes_io = io.BytesIO()
+#     data.to_parquet(bytes_io)
+#     bytes_io.seek(0)  # Reset stream pointer
+#     return bytes_io
 
-# Helper function to save video data as a video file
-def save_video(data: np.ndarray, file_path: str) -> io.BytesIO:
-    """
-    Save a numpy array of video frames to a video file and return it as a byte stream.
+# # Helper function to save video data as a video file
+# def save_video(data: np.ndarray, file_path: str) -> io.BytesIO:
+#     """
+#     Save a numpy array of video frames to a video file and return it as a byte stream.
     
-    Args:
-        data: Numpy array of video frames.
-        file_path: Path indicating the type of video file (e.g., .mp4, .avi).
+#     Args:
+#         data: Numpy array of video frames.
+#         file_path: Path indicating the type of video file (e.g., .mp4, .avi).
     
-    Returns:
-        io.BytesIO: Byte stream containing the video file content.
-    """
-    bytes_io = io.BytesIO()
-    # Use a temporary video file since OpenCV can't write directly to a stream
-    temp_file_path = '/tmp/temp_video.mp4'  # Example for .mp4, change as needed
-    height, width, layers = data[0].shape
-    fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # For .mp4 format
-    video_writer = cv2.VideoWriter(temp_file_path, fourcc, 30.0, (width, height))
+#     Returns:
+#         io.BytesIO: Byte stream containing the video file content.
+#     """
+#     bytes_io = io.BytesIO()
+#     # Use a temporary video file since OpenCV can't write directly to a stream
+#     temp_file_path = '/tmp/temp_video.mp4'  # Example for .mp4, change as needed
+#     height, width, layers = data[0].shape
+#     fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # For .mp4 format
+#     video_writer = cv2.VideoWriter(temp_file_path, fourcc, 30.0, (width, height))
     
-    for frame in data:
-        video_writer.write(frame)
+#     for frame in data:
+#         video_writer.write(frame)
     
-    video_writer.release()
+#     video_writer.release()
 
-    # Read back the temporary file into the byte stream
-    with open(temp_file_path, 'rb') as f:
-        bytes_io.write(f.read())
-    bytes_io.seek(0)  # Reset stream pointer
-    return bytes_io
+#     # Read back the temporary file into the byte stream
+#     with open(temp_file_path, 'rb') as f:
+#         bytes_io.write(f.read())
+#     bytes_io.seek(0)  # Reset stream pointer
+#     return bytes_io
 
-# Helper function to save audio data as an audio file
-def save_audio(data: np.ndarray, file_path: str) -> io.BytesIO:
-    """
-    Save a numpy array of audio samples to an audio file and return it as a byte stream.
+# # Helper function to save audio data as an audio file
+# def save_audio(data: np.ndarray, file_path: str) -> io.BytesIO:
+#     """
+#     Save a numpy array of audio samples to an audio file and return it as a byte stream.
     
-    Args:
-        data: Numpy array of audio samples.
-        file_path: Path indicating the type of audio file (e.g., .mp3, .wav).
+#     Args:
+#         data: Numpy array of audio samples.
+#         file_path: Path indicating the type of audio file (e.g., .mp3, .wav).
     
-    Returns:
-        io.BytesIO: Byte stream containing the audio file content.
-    """
-    bytes_io = io.BytesIO()
-    audio_segment = AudioSegment(
-        data.tobytes(), 
-        frame_rate=44100,  # Assuming a default sample rate; adjust if necessary
-        sample_width=data.dtype.itemsize, 
-        channels=1  # Assuming mono; adjust if necessary
-    )
-    if file_path.endswith('.mp3'):
-        audio_segment.export(bytes_io, format="mp3")
-    elif file_path.endswith('.wav'):
-        audio_segment.export(bytes_io, format="wav")
-    else:
-        raise ValueError("Unsupported audio format")
+#     Returns:
+#         io.BytesIO: Byte stream containing the audio file content.
+#     """
+#     bytes_io = io.BytesIO()
+#     audio_segment = AudioSegment(
+#         data.tobytes(), 
+#         frame_rate=44100,  # Assuming a default sample rate; adjust if necessary
+#         sample_width=data.dtype.itemsize, 
+#         channels=1  # Assuming mono; adjust if necessary
+#     )
+#     if file_path.endswith('.mp3'):
+#         audio_segment.export(bytes_io, format="mp3")
+#     elif file_path.endswith('.wav'):
+#         audio_segment.export(bytes_io, format="wav")
+#     else:
+#         raise ValueError("Unsupported audio format")
     
-    bytes_io.seek(0)  # Reset stream pointer
-    return bytes_io
+#     bytes_io.seek(0)  # Reset stream pointer
+#     return bytes_io
     
 
 def bytes_to_data(data_bytes: bytes, ext: str) -> TimecoursePayload:
@@ -387,26 +389,40 @@ def reupload_data_to_gcs(data: TimecoursePayload,
     # Determine the file extension and save data accordingly
     if blob_path.endswith(".bdf"):
         # Save EEG data to .bdf file
-        bytes_io = save_bdf(data)
-    elif blob_path.endswith(".npz"):
-        # Save numpy arrays to .npz file
-        bytes_io = save_npz(data)
-    elif blob_path.endswith(".parquet"):
-        # Save pandas DataFrame to parquet file
-        bytes_io = save_parquet(data)
-    elif blob_path.endswith(('.mp4', '.avi', '.mov')):
-        # Save video data as a video file
-        bytes_io = save_video(data, blob_path)
-    elif blob_path.endswith(('.mp3', '.wav')):
-        # Save audio data as an audio file
-        bytes_io = save_audio(data, blob_path)
+        temp_filename = save_bdf(data)
+    # elif blob_path.endswith(".npz"):
+    #     # Save numpy arrays to .npz file
+    #     bytes_io = save_npz(data)
+    # elif blob_path.endswith(".parquet"):
+    #     # Save pandas DataFrame to parquet file
+    #     bytes_io = save_parquet(data)
+    # elif blob_path.endswith(('.mp4', '.avi', '.mov')):
+    #     # Save video data as a video file
+    #     bytes_io = save_video(data, blob_path)
+    # elif blob_path.endswith(('.mp3', '.wav')):
+    #     # Save audio data as an audio file
+    #     bytes_io = save_audio(data, blob_path)
     elif blob_path.endswith(".fif"):
         # Save MNE Raw object to .fif file
-        bytes_io = save_mne_raw(data)
+        temp_filename = save_mne_raw(data)
     else:
         raise ValueError("Unsupported file format")
+    
+    print(f"Uploading file to: {gs_path} using gsutil")
+    try:
+        subprocess.run(
+            ["gsutil", "cp", temp_filename, gs_path],
+            check=True  # Raises CalledProcessError on failure
+        )
+        print(f"File uploaded to: {gs_path}")
+    except subprocess.CalledProcessError as e:
+        print(f"Failed to upload file: {e}")
+    finally:
+        # Clean up the temporary file
+        os.remove(temp_filename)
+        print(f"Temporary file {temp_filename} removed")
 
-    print(f"Uploading file to: {gs_path}")
-    # Re-upload the file to GCS
-    blob.upload_from_file(bytes_io, rewind=True)
-    print(f"File uploaded to: {gs_path}")
+    # print(f"Uploading file to: {gs_path}")
+    # # Re-upload the file to GCS
+    # blob.upload_from_file(bytes_io, rewind=True)
+    # print(f"File uploaded to: {gs_path}")
