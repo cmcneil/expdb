@@ -11,6 +11,7 @@ import mne
 import cv2  # OpenCV for video
 from pydub import AudioSegment
 import os
+import tempfile
 
 
 DATATYPE_TO_EXTENSION = {
@@ -39,10 +40,10 @@ def construct_gs_url(timecourse: Timecourse) -> str:
         str: Google Cloud Storage path.
     """
     ext = DATATYPE_TO_EXTENSION[timecourse.data.type]
-    print("DEBUG")
-    print(timecourse.date_collected)
-    print(timecourse.date_collected.strftime('%Y%m%d_%H%M%S'))
-    print(timecourse)
+    # print("DEBUG")
+    # print(timecourse.date_collected)
+    # print(timecourse.date_collected.strftime('%Y%m%d_%H%M%S'))
+    # print(timecourse)
     gs_path = (f"{CONFIG.GS_BUCKET_NAME}/{timecourse.study.name}/"
                f"{timecourse.subject.code}/{timecourse.data.modality}/"
                f"{timecourse.data.type}/"
@@ -140,8 +141,14 @@ def save_bdf(data: mne.io.BaseRaw) -> io.BytesIO:
         io.BytesIO: Byte stream containing the .bdf file content.
     """
     bytes_io = io.BytesIO()
-    data.save(bytes_io, fmt='bdf')
-    bytes_io.seek(0)  # Reset stream pointer
+    with tempfile.NamedTemporaryFile(delete=False) as temp_file:
+        temp_file_name = temp_file.name
+        data.save(temp_file_name, fmt='bdf')
+
+    with open(temp_file_name, 'rb') as temp_file:
+    # Create a BytesIO object and load the contents of the temp file
+        bytes_io = io.BytesIO(temp_file.read())
+    os.remove(temp_file_name)
     return bytes_io
 
 # Helper function to save numpy arrays to NPZ format
