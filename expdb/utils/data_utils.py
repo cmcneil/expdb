@@ -141,7 +141,7 @@ def save_bdf(data: mne.io.BaseRaw) -> io.BytesIO:
         io.BytesIO: Byte stream containing the .bdf file content.
     """
     bytes_io = io.BytesIO()
-    with tempfile.NamedTemporaryFile(delete=False) as temp_file:
+    with tempfile.NamedTemporaryFile(delete=False, suffix='.bdf') as temp_file:
         temp_file_name = temp_file.name
         data.save(temp_file_name, fmt='bdf')
 
