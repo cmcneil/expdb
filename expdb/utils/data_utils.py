@@ -175,8 +175,7 @@ def save_mne_raw(data: mne.io.Raw) -> io.BytesIO:
     Returns:
         io.BytesIO: Byte stream containing the .bdf file content.
     """
-    bytes_io = io.BytesIO()
-    with tempfile.NamedTemporaryFile(delete=False, suffix='.fif') as temp_file:
+    with tempfile.NamedTemporaryFile(delete=False, suffix='_eeg.fif') as temp_file:
         temp_file_name = temp_file.name
         data.save(temp_file_name, overwrite=True)
 
@@ -184,6 +183,7 @@ def save_mne_raw(data: mne.io.Raw) -> io.BytesIO:
     # Create a BytesIO object and load the contents of the temp file
         bytes_io = io.BytesIO(temp_file.read())
     os.remove(temp_file_name)
+    bytes_io.seek(0)
     return bytes_io
 
 # Helper function to save numpy arrays to NPZ format
@@ -406,6 +406,7 @@ def reupload_data_to_gcs(data: TimecoursePayload,
     else:
         raise ValueError("Unsupported file format")
 
+    print(f"Uploading file to: {gs_path}")
     # Re-upload the file to GCS
     blob.upload_from_file(bytes_io, rewind=True)
     print(f"File uploaded to: {gs_path}")
