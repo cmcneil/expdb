@@ -15,7 +15,7 @@ import tempfile
 
 
 DATATYPE_TO_EXTENSION = {
-    DataType.EEG: "bdf",
+    DataType.EEG: "fif",
     DataType.FMRI: "npz",
     DataType.INPUT_RESPONSE: "parquet",
     DataType.VISUAL_PROMPT: "mp4",
@@ -29,7 +29,7 @@ DATATYPE_TO_EXTENSION = {
 
 CONFIG = get_config()
 
-TimecoursePayload = Union[mne.io.BaseRaw, Dict[str, np.ndarray],
+TimecoursePayload = Union[mne.io.Raw, Dict[str, np.ndarray],
                           pd.DataFrame, np.ndarray]
 
 def construct_gs_url(timecourse: Timecourse) -> str:
@@ -51,7 +51,7 @@ def construct_gs_url(timecourse: Timecourse) -> str:
     return f"gs://{gs_path}"
 
 
-def load_bdf(path: str) -> mne.io.BaseRaw:
+def load_bdf(path: str) -> mne.io.Raw:
     """
     Loads EEG data from a BDF file stored in memory as bytes.
     
@@ -66,6 +66,20 @@ def load_bdf(path: str) -> mne.io.BaseRaw:
     # with io.BytesIO(data_bytes) as bdf_file:
     #     raw = mne.io.read_raw_bdf(bdf_file, preload=True)
     #     return raw
+
+def load_mne_raw(path: str) -> mne.io.Raw:
+    """
+    Loads EEG data from a fif file stored in memory as bytes.
+    
+    Args:
+        path: fif file.
+    
+    Returns:
+        mne.io.BaseRaw: The loaded EEG data.
+    """
+    raw = mne.io.read_raw_fif(path, preload=True)
+    return raw
+
 
 def load_npz(data_bytes: bytes) -> Dict[str, np.ndarray]:
     """
@@ -130,9 +144,9 @@ def load_audio(data_bytes):
         samples = np.array(audio_segment.get_array_of_samples())
         return samples
     
-def save_bdf(data: mne.io.BaseRaw) -> io.BytesIO:
+def save_bdf(data: mne.io.Raw) -> io.BytesIO:
     """
-    Save EEG data to a .bdf file and return it as a byte stream.
+    Save EEG data to a .fif file and return it as a byte stream.
     
     Args:
         data: EEG data to be saved.
@@ -143,7 +157,28 @@ def save_bdf(data: mne.io.BaseRaw) -> io.BytesIO:
     bytes_io = io.BytesIO()
     with tempfile.NamedTemporaryFile(delete=False, suffix='.bdf') as temp_file:
         temp_file_name = temp_file.name
-        data.save(temp_file_name, fmt='bdf')
+        mne.export.export_raw(temp_file_name, data)
+
+    with open(temp_file_name, 'rb') as temp_file:
+    # Create a BytesIO object and load the contents of the temp file
+        bytes_io = io.BytesIO(temp_file.read())
+    os.remove(temp_file_name)
+    return bytes_io
+
+def save_mne_raw(data: mne.io.Raw) -> io.BytesIO:
+    """
+    Save EEG data to a .bdf file and return it as a byte stream.
+    
+    Args:
+        data: EEG data to be saved.
+    
+    Returns:
+        io.BytesIO: Byte stream containing the .bdf file content.
+    """
+    bytes_io = io.BytesIO()
+    with tempfile.NamedTemporaryFile(delete=False, suffix='.fif') as temp_file:
+        temp_file_name = temp_file.name
+        data.save(temp_file_name)
 
     with open(temp_file_name, 'rb') as temp_file:
     # Create a BytesIO object and load the contents of the temp file
@@ -273,6 +308,9 @@ def bytes_to_data(data_bytes: bytes, ext: str) -> TimecoursePayload:
         # Load audio file as numpy arrays (waveform)
         audio_data = load_audio(data_bytes)
         return audio_data
+    elif ext == ".fif":
+        # Load EEG data from .fif file
+        return load_mne_raw(data_bytes)
     else:
         raise ValueError("Unsupported file format")
 
@@ -362,6 +400,9 @@ def reupload_data_to_gcs(data: TimecoursePayload,
     elif blob_path.endswith(('.mp3', '.wav')):
         # Save audio data as an audio file
         bytes_io = save_audio(data, blob_path)
+    elif blob_path.endswith(".fif"):
+        # Save MNE Raw object to .fif file
+        bytes_io = save_mne_raw(data)
     else:
         raise ValueError("Unsupported file format")
 
