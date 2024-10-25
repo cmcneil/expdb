@@ -5,3 +5,4 @@ poetry.lock
 .pytype*
 *.sqlite
 uploads/
+*__expdb_cache__

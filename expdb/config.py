@@ -12,6 +12,7 @@ class Config:
     SECRET_KEY = os.getenv('SECRET_KEY', 'a-secure-default-key')
     GS_BUCKET_NAME = os.getenv('GS_BUCKET_NAME', 'alembiclabs_expdb')
     UPLOAD_FOLDER = 'uploads'
+    CACHE_DIR = '__expdb_cache__'
 
 class DevelopmentConfig(Config):
     SQLALCHEMY_DATABASE_URI = os.getenv(

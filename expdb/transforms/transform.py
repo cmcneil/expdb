@@ -11,6 +11,7 @@ import json
 from ..config import get_config
 from ..db import Session
 from ..models import Data, Study, Subject, Timecourse,TransformData
+from ..storage import StorageManager, GCSStorageManager
 from ..utils import data_utils as du
 from ..utils import git_utils
 
@@ -34,11 +35,19 @@ class Transform(ABC, Generic[T, U]):
 
     def __init__(self, timecourse: Optional[Timecourse],
                  session: Optional[sqlalchemy.orm.Session],
+                 storage_manager: Optional[StorageManager] = None,
                  **params):
         self.params = params
         self.data = None
         sess = None
         self.input_timecourses = []
+        if storage_manager is None:
+            self.storage_manager = GCSStorageManager(
+                CONFIG.GCS_BUCKET,
+                local_cache_dir=CONFIG.LOCAL_CACHE_DIR
+            )
+        else:
+            self.storage_manager = storage_manager
         
         if timecourse is not None:
             if timecourse.data != self.input_datatype:
@@ -101,20 +110,21 @@ class Transform(ABC, Generic[T, U]):
             new_timecourse.derived_from.append(parent)
         
         # Get the upload path for the new timecourse
-        gs_url = du.construct_gs_url(new_timecourse)
-        new_timecourse.path = gs_url
+        uri = self.storage_manager.get_uri_from_data(new_timecourse, T)
+        # gs_url = du.construct_gs_url(new_timecourse)
+        new_timecourse.path = uri
         return new_timecourse
         
 
     def _load_data(self):
         self.data = []
         for tc in self.input_timecourses:
-            path = tc.path
-            self.data.append(du.load_data_from_gcs(path))
+            self.data.append(self.storage_manager.retrieve(tc))
         
     def commit(self):
-        du.reupload_data_to_gcs(self.out_data,
-                                self.new_timecourse.path)
+        # du.reupload_data_to_gcs(self.out_data,
+        #                         self.new_timecourse.path)
+        self.storage_manager.store(self.new_timecourse, self.out_data)
         self.session.add(self.new_timecourse)
         self.session.commit()
         
@@ -124,23 +134,16 @@ class RawDataUpload(Transform[W, W], Generic[W]):
     
     def __init__(self, data_type: Data, subject: Subject, study: Study,
                  is_pilot: bool, file_path: str,
-                 date_collected: Optional[datetime] = None):    
-        super().__init__(None, session=object_session(study))
+                 date_collected: Optional[datetime] = None,
+                 storage_manager: Optional[StorageManager] = None):    
+        super().__init__(None, session=object_session(study),
+                         storage_manager=storage_manager)
         self.output_datatype = data_type
         self.date_collected = date_collected
         self.file_path = file_path
         self.study = study
         self.subject = subject
-        # self.subject = self.session.query(Subject).filter_by(code=subject_code
-        #                                                 ).one_or_none()
-        # self.study = self.session.query(Study).filter_by(name=study_name
-        #                                             ).one_or_none()
-
         self.is_pilot = is_pilot
-        # if self.subject is None:
-        #     raise ValueError(f"Subject with code '{subject_code}' does not exist.")
-        # if self.study is None:
-        #     raise ValueError(f"Study with name '{study_name}' does not exist.")
 
     def _construct_new_timecourse(self):
         # Get an ID for the timecourse.
