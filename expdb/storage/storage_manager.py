@@ -109,7 +109,7 @@ class GCSStorageManager(StorageManager):
   def _upload_data_to_uri(self, fname: str, uri: str):
     try:
         subprocess.run(
-            ["gcloud", "storage", "cp", fname: str, uri: str],
+            ["gcloud", "storage", "cp", fname, uri],
             check=True  # Raises CalledProcessError on failure
         )
         print(f"File uploaded to: {uri}")
