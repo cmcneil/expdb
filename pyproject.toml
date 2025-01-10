@@ -1,36 +1,51 @@
-[tool.poetry]
+[project]
 name = "expdb"
 version = "0.1.0"
-description = "An experiment database for dataset tracking and data l"
-authors = ["Carson McNeil <carson.mcneil@gmail.com>"]
+description = "An experiment database for dataset tracking and data lineage"
+authors = [
+    { name = "Carson McNeil", email = "carson.mcneil@gmail.com" }
+]
+dependencies = [
+    "sqlalchemy>=2.0.0",
+    "psycopg2>=2.9.9",
+    "alembic>=1.13.0",
+    "flask>=3.0.0",
+    "flask-admin>=1.6.1",
+    "flask-sqlalchemy>=3.1.1",
+    "flask-wtf>=1.2.1",
+    "google-cloud-storage>=2.13.0",
+    "pandas>=2.2.0",
+    "pydub>=0.25.1",
+    "soundfile>=0.12.1",
+    "pytest>=8.0.0",
+    "mne>=1.6.0",
+    "numpy>=1.26.0",
+    "opencv-python-headless>=4.9.0",
+    "wtforms>=3.1.0",
+    "wtforms-sqlalchemy>=0.3.0"
+]
+requires-python = ">=3.12"
 readme = "README.md"
-packages = [{include = "expdb"}]
-
-[tool.poetry.dependencies]
-python = "^3.12"
-sqlalchemy = "*"
-psycopg2 = "*"
-alembic = "*"
-Flask = "*"
-Flask-Admin = "*"
-#Flask-Bootstrap = "*"
-Flask-SQLAlchemy = "*"
-Flask-Wtf = "*"
-google-cloud-storage = "*"
-pandas = "*"
-pydub = "*"
-pytype = "*"
-pytest = "*"
-mne = "*"
-numpy = "*"
-opencv-python = "*"
-wtforms = "*"
-wtforms-sqlalchemy = "*"
-
-[tool.pytype]
-inputs = ['expdb']
-
 
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py312"
+
+[project.optional-dependencies]
+dev = [
+    "pytype>=2024.2.27"
+]
+
+[tool.pytype]
+inputs = [
+    "expdb",
+]
+python_version = "3.12"

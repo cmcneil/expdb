@@ -1,8 +1,33 @@
-poetry.lock
-*__pycache__
-*.pytest_cache
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.env
+.venv
+env/
+venv/
+ENV/
+dist/
+build/
+*.egg-info/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Project specific
+.pytest_cache/
+.coverage
+htmlcov/
+.pytype/
 *.ipynb_checkpoints
-.pytype*
 *.sqlite
 uploads/
-*__expdb_cache__
+
+# OS specific
+.DS_Store
+Thumbs.db

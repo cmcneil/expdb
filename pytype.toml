@@ -10,8 +10,7 @@ exclude = [
 
 # Space-separated list of files or directories to process.
 inputs = [
-    'models',
-    'app',
+    'expdb',
 ]
 
 # Keep going past errors to analyze as many files as possible.
@@ -28,7 +27,7 @@ output = '.pytype'
 platform = 'linux'
 
 # Paths to source code directories, separated by ':'.
-pythonpath = '.'
+pythonpath = '.:.venv/lib/python3.12/site-packages:$PYTHONPATH'
 
 # Python version (major.minor) of the target code.
 python_version = '3.12'

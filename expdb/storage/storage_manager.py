@@ -1,5 +1,5 @@
 from typing import Type
-from abc import ABCMeta
+from abc import ABC, abstractmethod
 
 from . import format as fmt
 from ..models import DataType, Timecourse
@@ -11,7 +11,7 @@ import subprocess
 import tempfile
 
 
-class StorageManager(ABCMeta):
+class StorageManager(ABC):
   def __init__(self, local_cache_dir=None):
     """Initialize a StorageManager object.
 
@@ -36,16 +36,17 @@ class StorageManager(ABCMeta):
 
     if self.local_cache_dir is not None:
       local_path = os.path.join(self.local_cache_dir, path)
+      os.makedirs(os.path.dirname(local_path), exist_ok=True)
       serializer.to_file(local_path, payload)
       self._upload_data_to_uri(local_path, uri)
     else:
-      tf = tempfile.NamedTemporaryFile(
-        suffix=f".{fmt.TYPE_TO_EXTENSION[data_type, type(payload)]}")
-      serializer.to_file(tf.name, payload)
-      try:
-        self._upload_data_to_uri(tf.name, uri)
-      finally:
-        tf.close()
+      with tempfile.NamedTemporaryFile(
+        suffix=f".{fmt.TYPE_TO_EXTENSION[data_type, type(payload)]}") as tf:
+        serializer.to_file(tf.name, payload)
+        try:
+          self._upload_data_to_uri(tf.name, uri)
+        finally:
+          tf.close()
 
   def retrieve(self, timecourse: Timecourse) -> fmt.TimecoursePayload:
     uri = timecourse.path
@@ -79,13 +80,16 @@ class StorageManager(ABCMeta):
             f"{timecourse.date_collected.strftime('%Y%m%d_%H%M%S')}.{ext}")
     return path
   
+  @abstractmethod
   def get_uri_from_data(self, timecourse: Timecourse,
                         payload: fmt.TimecoursePayload) -> str:
     raise NotImplementedError
 
+  @abstractmethod
   def _upload_data_to_uri(self, fname: str, uri: str):
     raise NotImplementedError
 
+  @abstractmethod
   def _download_data_from_uri(self, path: str, local_path: str):
     raise NotImplementedError
 

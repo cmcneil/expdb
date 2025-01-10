@@ -5,25 +5,37 @@ import numpy as np
 from datetime import datetime
 from unittest.mock import patch
 from ..storage import GCSStorageManager, LocalStorageManager
-from ..models import Data, DataType, Modality, Timecourse
+from ..models import Data, DataType, Modality, Timecourse, Study, Subject
 from ..storage import format as fmt
+
+
+def list_files(startpath):
+    for root, dirs, files in os.walk(startpath):
+        level = root.replace(startpath, '').count(os.sep)
+        indent = ' ' * 4 * (level)
+        print('{}{}/'.format(indent, os.path.basename(root)))
+        subindent = ' ' * 4 * (level + 1)
+        for f in files:
+            print('{}{}'.format(subindent, f))
 
 @pytest.fixture
 def real_timecourse():
     # Create a real Timecourse instance with realistic attributes
+    study = Study(name="study_name", github_repo="test/repo")
+    subject = Subject(name="Testy McTesterson", code="TT",
+                      age=20, meditation_experience=5)
     return Timecourse(
         path="gs://bucket_name/path/to/file.npy",
-        data=Data(type=DataType.EEG, modality=Modality.EEG, sampling_rate=1000),
-        modality="some_modality",
+        data=Data(type=DataType.FMRI, modality=Modality.IMAGING, sampling_rate=1.0),
         date_collected=datetime(2024, 1, 1, 12, 0, 0),
-        subject_code="subject123",
-        study_name="study_name"
+        subject=subject,
+        study=study
     )
 
 @pytest.fixture
 def ndarray_payload():
     # Create a real np.ndarray payload as test data
-    return np.random.rand(10, 10)
+    return np.random.rand(10, 10, 10)
 
 @pytest.fixture
 def gcs_storage_manager():
@@ -72,7 +84,7 @@ def test_store_retrieve_with_ndarray_payload(local_storage_manager,
 
     payload2 = local_storage_manager.retrieve(real_timecourse)
     # Clean up the created file after the test
-    np.assert_equal(payload2, ndarray_payload)  # check that the payload matches payload2
+    np.testing.assert_array_equal(payload2, ndarray_payload)  # check that the payload matches payload2
     os.remove(local_path)
 
 # def test_retrieve_with_ndarray_payload(local_storage_manager, real_timecourse, ndarray_payload):
