@@ -19,7 +19,9 @@ jobs:
         curl -LsSf https://astral.sh/uv/install.sh | sh
     - name: Install dependencies
       run: |
-        uv sync
+        uv venv
+        source .venv/bin/activate
+        uv sync --all-groups
     - name: Test with pytest
       run: |
         pytest expdb/tests/

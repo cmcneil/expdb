@@ -13,17 +13,7 @@ from ..models import DataType, Timecourse
 TimecoursePayload = Union[mne.io.Raw, Dict[str, np.ndarray],
                          pd.DataFrame, np.ndarray]
                           
-TYPE_TO_EXTENSION = {
-  # (DataType.EEG, mne.io.Raw): "fif",
-  # (DataType.FMRI, np.ndarray): "npz",
-  # (DataType.INPUT_RESPONSE, pd.DataFrame): "parquet",
-  # (DataType.VISUAL_PROMPT, np.ndarray): "mp4", 
-  # (DataType.AUDITORY_PROMPT, np.ndarray): "mp3",
-  # (DataType.VIDEO, np.ndarray): "mp4",
-}
-
-
-
+TYPE_TO_EXTENSION = {}
 TYPE_TO_SERIALIZER: Dict[Tuple[DataType, type], Type['PayloadSerializer[TimecoursePayload]']] = {}
 
 

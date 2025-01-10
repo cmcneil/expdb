@@ -34,6 +34,15 @@ build-backend = "hatchling.build"
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py", "*_test.py"]
+filterwarnings = [
+    "ignore::DeprecationWarning:pkg_resources.*",
+    "ignore::DeprecationWarning:google.rpc.*",
+    "ignore::DeprecationWarning:google.auth.*",
+    "ignore::DeprecationWarning:flask_sqlalchemy.*",
+    "ignore::DeprecationWarning:sqlalchemy.*",
+    "ignore::DeprecationWarning:pydub.utils.*",
+    # Add more patterns as needed
+]
 
 [tool.ruff]
 line-length = 88
@@ -41,6 +50,7 @@ target-version = "py312"
 
 [project.optional-dependencies]
 dev = [
+    "pytest>=8.0.0",
     "pytype>=2024.2.27"
 ]
 
