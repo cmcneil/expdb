@@ -28,6 +28,8 @@ htmlcov/
 *.sqlite
 uploads/
 
+expdb/migrations/
+
 # OS specific
 .DS_Store
 Thumbs.db

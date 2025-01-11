@@ -4,4 +4,5 @@ __all__ = [
   "db",
   "app",
   "config",
+  "lib",
 ]

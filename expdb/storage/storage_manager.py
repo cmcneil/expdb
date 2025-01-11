@@ -29,6 +29,15 @@ class StorageManager(ABC):
     self.local_cache_dir = local_cache_dir
 
   def store(self, timecourse: Timecourse, payload: fmt.TimecoursePayload):
+    """Store a timecourse payload in the storage backend.
+
+    Args:
+        timecourse (Timecourse): The timecourse object containing metadata
+        payload (TimecoursePayload): The data payload to store
+
+    The data will be serialized using the appropriate serializer for the data type
+    and stored either directly or through the local cache depending on configuration.
+    """
     data_type = timecourse.data.type
     serializer = fmt.TYPE_TO_SERIALIZER[(data_type, type(payload))]()
     path = self._get_local_path_from_data(timecourse, type(payload))
@@ -49,6 +58,17 @@ class StorageManager(ABC):
           tf.close()
 
   def retrieve(self, timecourse: Timecourse) -> fmt.TimecoursePayload:
+    """Retrieve a timecourse payload from storage.
+
+    Args:
+        timecourse (Timecourse): The timecourse object containing metadata and path
+
+    Returns:
+        TimecoursePayload: The deserialized data payload
+
+    The data will be retrieved either from local cache if available or downloaded
+    from the storage backend.
+    """
     uri = timecourse.path
     ext = uri.split('.')[-1]
     data_type, filetype = fmt.EXTENSION_TO_TYPE[ext]
@@ -73,6 +93,15 @@ class StorageManager(ABC):
   def _get_local_path_from_data(self, timecourse: Timecourse,
                                 payload_type: Type[fmt.TimecoursePayload]
                                 ) -> str:
+    """Generate a local filesystem path for storing the timecourse data.
+
+    Args:
+        timecourse (Timecourse): The timecourse object containing metadata
+        payload_type (Type[TimecoursePayload]): The type of payload being stored
+
+    Returns:
+        str: The canonical path to the data
+    """
     ext = fmt.TYPE_TO_EXTENSION[(timecourse.data.type, payload_type)]
     path = (f"{timecourse.study.name}/"
             f"{timecourse.subject.code}/{timecourse.data.modality.value}/"
@@ -83,18 +112,33 @@ class StorageManager(ABC):
   @abstractmethod
   def get_uri_from_data(self, timecourse: Timecourse,
                         payload: fmt.TimecoursePayload) -> str:
+    """Generate a URI for storing the timecourse data in the storage backend."""
     raise NotImplementedError
 
   @abstractmethod
   def _upload_data_to_uri(self, fname: str, uri: str):
+    """Upload a local file to the storage backend."""
     raise NotImplementedError
 
   @abstractmethod
   def _download_data_from_uri(self, path: str, local_path: str):
+    """Download a file from the storage backend to a local path."""
     raise NotImplementedError
 
   
 class GCSStorageManager(StorageManager):
+  """Storage manager implementation for Google Cloud Storage.
+
+  This class implements the StorageManager interface for storing and retrieving files
+  from Google Cloud Storage (GCS) buckets. It uses the gcloud CLI tool for file operations.
+
+  Args:
+    gcs_bucket: The GCS bucket URL in the format "gs://bucket_name/"
+    local_cache_dir: Optional local directory to cache downloaded files
+
+  Raises:
+    ValueError: If the gcs_bucket URL format is invalid
+  """
   def __init__(self, gcs_bucket, local_cache_dir=None):
     super().__init__(local_cache_dir=local_cache_dir)
 
@@ -132,6 +176,14 @@ class GCSStorageManager(StorageManager):
 
 
 class LocalStorageManager(StorageManager):
+  """Storage manager implementation for local filesystem storage.
+
+  This class implements the StorageManager interface for storing and retrieving files
+  from the local filesystem.
+
+  Args:
+    file_root: The root directory for storing files
+  """
   def __init__(self, file_root: str):
     super().__init__(local_cache_dir=file_root)
   
